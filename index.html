@@ -1,0 +1,679 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Estoque Rápido</title>
+
+  <style>
+    :root{
+      --bg:#f7f7f8;
+      --card:#fff;
+      --text:#111;
+      --muted:#666;
+      --primary:#2e7d6b;
+      --border:#e6e6e8;
+    }
+
+    *{box-sizing:border-box}
+
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      background:var(--bg);
+      color:var(--text);
+    }
+
+    /* ===== TOPO ===== */
+    .top{
+      position:sticky;
+      top:0;
+      background:rgba(247,247,248,.92);
+      backdrop-filter:blur(10px);
+      border-bottom:1px solid var(--border);
+      padding:18px 14px;
+      display:flex;
+      justify-content:center; /* CENTRALIZA HORIZONTAL */
+      z-index:10;
+    }
+
+    .brand{
+      max-width:520px;
+      margin:0 auto;
+      display:flex;
+      align-items:center;
+      gap:12px;
+    }
+
+    .logo-img{
+      height:72px;
+      width:72px;
+      object-fit:contain;
+      border-radius:14px;
+      background:#fff;
+      border:1px solid var(--border);
+      padding:6px;
+    }
+
+    .brand-text h1{
+      font-size:16px;
+      margin:0;
+      line-height:1.1;
+    }
+
+    .brand-text .sub{
+      font-size:12px;
+      color:var(--muted);
+      margin-top:2px;
+    }
+
+    /* ===== CONTEÚDO ===== */
+    .wrap{
+      max-width:520px;
+      margin:0 auto;
+      padding:14px 14px 90px;
+    }
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:16px;
+      box-shadow:0 6px 18px rgba(0,0,0,.04);
+    }
+
+    .stack{
+      display:flex;
+      flex-direction:column;
+      gap:16px;
+    }
+
+    label{
+      font-size:13px;
+      font-weight:600;
+      display:flex;
+      gap:6px;
+      align-items:center;
+    }
+
+    .muted{
+      color:var(--muted);
+      font-weight:500;
+      font-size:12px;
+    }
+
+    select,
+    input{
+      width:100%;
+      height:52px;
+      border-radius:14px;
+      border:1px solid var(--border);
+      padding:0 12px;
+      font-size:16px;
+      background:#fff;
+      outline:none;
+    }
+
+    select:focus,
+    input:focus{
+      border-color:var(--primary);
+    }
+
+    .row{
+      display:flex;
+      gap:10px;
+    }
+
+    /* ===== CHIPS ===== */
+    .chips{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-top:6px;
+      margin-bottom:8px; /* <-- isso resolve o "grudado" */
+    }
+
+    .chip{
+      border:1px solid var(--border);
+      background:#fff;
+      border-radius:999px;
+      padding:10px 14px;
+      font-size:14px;
+      cursor:pointer;
+      user-select:none;
+    }
+
+    .chip.on{
+      border-color:rgba(46,125,107,.4);
+      background:rgba(46,125,107,.12);
+      color:var(--primary);
+      font-weight:700;
+    }
+
+    /* ===== BOTÃO ===== */
+    .btn{
+      height:56px;
+      border-radius:16px;
+      border:0;
+      background:var(--primary);
+      color:#fff;
+      font-size:16px;
+      font-weight:800;
+      cursor:pointer;
+      box-shadow:0 10px 24px rgba(46,125,107,.25);
+    }
+
+    .btn:disabled{
+      opacity:.5;
+      cursor:not-allowed;
+      box-shadow:none;
+    }
+
+    /* ===== TOAST ===== */
+    .toast{
+      position:fixed;
+      left:50%;
+      transform:translateX(-50%);
+      bottom:16px;
+      background:#111;
+      color:#fff;
+      padding:12px 14px;
+      border-radius:14px;
+      max-width:520px;
+      width:calc(100% - 28px);
+      display:none;
+      font-size:14px;
+      z-index:999;
+    }
+
+    .small{
+      	display:block;
+  	font-size:12px;
+  	color:var(--muted);
+  	text-align:center;
+ 	margin-top:10px;   /* antes 6px */
+  	line-height:1.35;
+    }
+
+    .hint{
+      display:block;
+      font-size:12px;
+      color:var(--muted);
+      margin-top:10px;
+      line-height:1.35;	
+    }
+
+    /* ===== ADMIN ===== */
+    .admin{
+      display:none;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="top">
+    <div class="brand">
+      <img src="logo-esquadripro.png" alt="EsquadriPro" class="logo-img">
+      <div class="brand-text">
+        <h1>Baixa Rápida</h1>
+        <div class="sub">Controle de Estoque</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="card stack">
+
+      <div>
+        <label>Obra</label>
+        <select id="obra"></select>
+      </div>
+
+      <div>
+        <label>Tipo</label>
+        <div class="chips" id="tipos"></div>
+      </div>
+
+      <div id="usoWrap" style="display:none">
+        <label>Usar</label>
+        <div class="chips" id="usos"></div>
+        <div class="hint">Escolha se vai usar material comprado para a obra ou sobras (aproveitamento).</div>
+      </div>
+
+      <div>
+        <label>Material <span class="muted">(ID em destaque)</span></label>
+        <select id="material"></select>
+        <div class="hint" id="materialHint"></div>
+      </div>
+
+      <div id="corWrap">
+        <label>Cor</label>
+        <select id="cor"></select>
+      </div>
+
+      <div>
+        <label>Quantidade <span class="muted" id="unidadeHint"></span></label>
+        <input id="qtd" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0,00" />
+        <div class="small" id="qtdHelp"></div>
+      </div>
+
+      <div class="row">
+        <input id="usuario" placeholder="Seu nome (opcional)" />
+      </div>
+
+      <button class="btn" id="btn" disabled>REGISTRAR BAIXA</button>
+
+      <div class="small">Dica: 0,10 = 10 cm | 0,30 = 30 cm</div>
+    </div>
+
+    <div class="card stack admin" id="adminCard" style="margin-top:12px">
+      <label>Admin (escondido)</label>
+      <div class="small">Aqui você só verifica dados. Estoque você edita direto na planilha.</div>
+      <button class="btn" id="reload">RECARREGAR DADOS</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+  /***********************
+   * CONFIGURE AQUI
+   ***********************/
+  const API_URL = "/api";
+  const WORKER_TOKEN = "esquadripro";
+  const ADMIN_PIN = "B.l.p@@182"; // deve bater com o Apps Script (se usar #admin)
+
+  /***********************/
+  const el = (id) => document.getElementById(id);
+  const toast = (msg) => {
+    const t = el("toast");
+    t.textContent = msg;
+    t.style.display = "block";
+    setTimeout(() => t.style.display = "none", 2200);
+  };
+
+  // Normaliza texto: remove acentos, lower, trim
+  function normText(v){
+    return (v||"")
+      .toString()
+      .trim()
+      .toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  }
+
+  // Normaliza "Tipo/Categoria" para bater com botões
+  function normTipo(v){
+    const t = normText(v);
+    // Mapeamentos comuns
+    if (t === "acessorio" || t === "acessorios") return "acessorio";
+    if (t === "componente" || t === "componentes") return "componente";
+    if (t === "perfil" || t === "perfis") return "perfil";
+    if (t === "vidro" || t === "vidros") return "vidro";
+    return t;
+  }
+
+  // Normaliza "Uso" (obra/sobra)
+  function normUso(v){
+    const u = normText(v);
+    if (u.includes("sobra")) return "sobra";
+    return "obra";
+  }
+
+  let DATA = { materiais: [], obras: [] };
+
+  let tipoAtual = "Perfil";
+  let usoAtual = "Da Obra";   // só para Perfil
+  let materialAtual = null;
+
+  function setSelectOptions(select, options, placeholder){
+    select.innerHTML = "";
+    const opt0 = document.createElement("option");
+    opt0.value = "";
+    opt0.textContent = placeholder;
+    select.appendChild(opt0);
+    options.forEach(o => select.appendChild(o));
+  }
+
+  function normalizeMaterial(m){
+    // garante estrutura mínima
+    const cores = Array.isArray(m.cores)
+      ? m.cores
+      : (m.cores ? m.cores.toString().split("|").map(s=>s.trim()).filter(Boolean) : []);
+
+    return {
+      id: (m.id||"").toString().trim(),
+      nome: (m.nome||m.name||"").toString().trim(),
+      tipo: m.tipo ?? m.categoria ?? m.Category ?? "",
+      unidade: (m.unidade||m.unit||"un").toString().trim(),
+      cores,
+      deposito: m.deposito ?? m.origem ?? "", // opcional
+      obra: m.obra ?? "",                      // opcional (se usar)
+      saldo: (m.saldo ?? m.estoque ?? m.stock ?? null),
+    };
+  }
+
+  async function loadData(){
+    const url = `${API_URL}?action=data&token=${encodeURIComponent(WORKER_TOKEN)}`;
+    const r = await fetch(url);
+    const ct = r.headers.get("content-type") || "";
+    // se vier HTML (erro), evita "Unexpected token <"
+    if (!ct.includes("application/json")) {
+      const txt = await r.text();
+      throw new Error("Resposta não-JSON do backend. Verifique Netlify redirect e Apps Script. Trecho: " + txt.slice(0,120));
+    }
+    const j = await r.json();
+    if(!j.ok) throw new Error(j.error || "falha ao carregar");
+    // normaliza materiais
+    j.materiais = (j.materiais || []).map(normalizeMaterial);
+    DATA = j;
+  }
+
+  function renderObras(){
+    const s = el("obra");
+    const opts = (DATA.obras || []).map(name => {
+      const o = document.createElement("option");
+      o.value = name;
+      o.textContent = name;
+      return o;
+    });
+    setSelectOptions(s, opts, "Selecione a obra");
+  }
+
+  function renderTipos(){
+    const tipos = ["Perfil","Vidro","Acessório","Componente"];
+    const wrap = el("tipos");
+    wrap.innerHTML = "";
+    tipos.forEach(t => {
+      const b = document.createElement("div");
+      b.className = "chip" + (t===tipoAtual ? " on" : "");
+      b.textContent = t;
+      b.onclick = () => {
+        tipoAtual = t;
+        // ao trocar tipo, reseta material/cor
+        materialAtual = null;
+        el("material").value = "";
+        el("cor").value = "";
+        el("qtd").value = "";
+        renderTipos();
+        renderUso();       // mostra/esconde
+        renderMateriais();
+      };
+      wrap.appendChild(b);
+    });
+  }
+
+  function renderUso(){
+    const wrap = el("usoWrap");
+    const usosWrap = el("usos");
+    const isPerfil = normTipo(tipoAtual) === "perfil";
+
+    wrap.style.display = isPerfil ? "block" : "none";
+
+    if (!isPerfil) return;
+
+    const usos = ["Da Obra","Sobra"];
+    usosWrap.innerHTML = "";
+    usos.forEach(u => {
+      const b = document.createElement("div");
+      b.className = "chip" + (u===usoAtual ? " on" : "");
+      b.textContent = u;
+      b.onclick = () => {
+        usoAtual = u;
+        materialAtual = null;
+        el("material").value = "";
+        el("cor").value = "";
+        el("qtd").value = "";
+        renderUso();
+        renderMateriais();
+      };
+      usosWrap.appendChild(b);
+    });
+  }
+
+  function getFilteredMaterials(){
+    const obraSel = el("obra").value;
+    const tipoKey = normTipo(tipoAtual);
+    const usoKey = normUso(usoAtual);
+
+    const list = (DATA.materiais || []).filter(m => {
+      if (!m.id || !m.nome) return false;
+
+      // 1) filtra por tipo/categoria (robusto a acentos)
+      const itemTipo = normTipo(m.tipo);
+      if (itemTipo !== tipoKey) return false;
+
+      // 2) somente Perfil tem filtro por uso (obra/sobra)
+      if (tipoKey === "perfil") {
+        // Se backend ainda não manda "deposito", NÃO filtra por uso (pra não ficar vazio)
+        const hasDeposito = (m.deposito !== null && m.deposito !== undefined && m.deposito !== "");
+        const hasObraField = (m.obra !== null && m.obra !== undefined && m.obra !== "");
+
+        if (hasDeposito) {
+          const dep = normText(m.deposito);
+          if (usoKey === "sobra") {
+            // aceita "sobra", "aproveitamento"
+            if (!(dep.includes("sobra") || dep.includes("aproveit"))) return false;
+          } else {
+            // "obra"
+            if (dep.includes("sobra") || dep.includes("aproveit")) return false;
+          }
+        } else if (hasObraField && usoKey === "obra") {
+          // se você usar campo "obra" no backend para itens da obra
+          // filtra itens da obra selecionada
+          if (obraSel && normText(m.obra) !== normText(obraSel)) return false;
+        } else if (hasObraField && usoKey === "sobra") {
+          // se usar obra = "Sobra" por exemplo
+          if (!(normText(m.obra).includes("sobra") || normText(m.obra).includes("aproveit"))) return false;
+        }
+        // se não tem deposito/obra no JSON, passa sem filtrar (não quebra)
+      }
+
+      // 3) “somente disponíveis” (se tiver saldo numérico no JSON)
+      if (m.saldo !== null && m.saldo !== undefined && m.saldo !== "") {
+        const n = Number(String(m.saldo).toString().replace(",", "."));
+        if (Number.isFinite(n) && n <= 0) return false;
+      }
+
+      return true;
+    });
+
+    // ordena por ID depois por nome (rápido de achar)
+    list.sort((a,b) => {
+      const idc = (a.id||"").localeCompare((b.id||""), "pt-BR");
+      if (idc !== 0) return idc;
+      return (a.nome||"").localeCompare((b.nome||""), "pt-BR");
+    });
+
+    return list;
+  }
+
+  function renderMateriais(){
+    const s = el("material");
+    const hint = el("materialHint");
+
+    const list = getFilteredMaterials();
+
+    const opts = list.map(m => {
+      const o = document.createElement("option");
+      o.value = m.id;
+      o.textContent = `${m.id} — ${m.nome}`; // simples e rápido
+      return o;
+    });
+
+    setSelectOptions(s, opts, list.length ? "Selecione o material" : "Sem itens disponíveis");
+
+    hint.textContent = list.length
+      ? "Somente itens disponíveis para o filtro selecionado."
+      : "Nenhum item passou no filtro (verifique Categoria/Tipo na planilha e/ou regras de Sobra).";
+
+    materialAtual = null;
+    renderCores([]);
+    renderUnidade(null);
+    validate();
+  }
+
+  function renderCores(cores){
+    const s = el("cor");
+    const wrap = el("corWrap");
+
+    // se não tiver cores, esconde o campo (fica mais limpo)
+    const has = Array.isArray(cores) && cores.length > 0;
+    wrap.style.display = has ? "block" : "none";
+
+    const opts = (cores || []).map(c => {
+      const o = document.createElement("option");
+      o.value = c;
+      o.textContent = c;
+      return o;
+    });
+
+    setSelectOptions(s, opts, "Selecione a cor");
+  }
+
+  function renderUnidade(m){
+    const hint = el("unidadeHint");
+    const help = el("qtdHelp");
+    if(!m){ hint.textContent=""; help.textContent=""; return; }
+
+    hint.textContent = `(${m.unidade})`;
+
+    if(m.unidade === "m") help.textContent = "Use decimais: 0,10 = 10 cm";
+    else if(m.unidade === "m²" || m.unidade === "m2") help.textContent = "Informe a área em m² (ex: 1,25)";
+    else help.textContent = "";
+  }
+
+  function parseQty(v){
+    if(v === null || v === undefined) return 0;
+    // aceita vírgula
+    const s = String(v).replace(",", ".");
+    const n = Number(s);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  function validate(){
+    const obraOk = !!el("obra").value;
+    const matOk = !!el("material").value;
+    const qtdOk = parseQty(el("qtd").value) > 0;
+
+    // cor só é obrigatória se o campo estiver visível (tem cores)
+    const corWrapVisible = el("corWrap").style.display !== "none";
+    const corOk = !corWrapVisible || !!el("cor").value;
+
+    el("btn").disabled = !(obraOk && matOk && corOk && qtdOk);
+  }
+
+  async function submit(){
+    const obra = el("obra").value;
+    const materialId = el("material").value;
+
+    const quantidade = parseQty(el("qtd").value);
+    const usuario = (el("usuario").value || "").trim();
+
+    const corWrapVisible = el("corWrap").style.display !== "none";
+    const cor = corWrapVisible ? el("cor").value : "";
+
+    const payload = {
+      token: WORKER_TOKEN,
+      obra,
+      materialId,
+      cor,
+      quantidade,
+      usuario,
+      tipo: tipoAtual,
+      uso: (normTipo(tipoAtual)==="perfil") ? usoAtual : "" // só manda uso em perfil
+    };
+
+    const r = await fetch(API_URL, {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify(payload)
+    });
+
+    const ct = r.headers.get("content-type") || "";
+    if (!ct.includes("application/json")) {
+      const txt = await r.text();
+      toast("Erro no backend (não-JSON).");
+      console.error(txt);
+      return;
+    }
+
+    const j = await r.json();
+    if(!j.ok) { toast(j.error || "Erro"); return; }
+
+    // limpar rápido: mantém obra/tipo/uso, limpa resto
+    el("material").value = "";
+    el("cor").value = "";
+    el("qtd").value = "";
+    materialAtual = null;
+    renderCores([]);
+    renderUnidade(null);
+    validate();
+
+    // opcional: recarrega dados (se backend já atualiza saldos)
+    try { await loadData(); } catch(e) {}
+    renderMateriais();
+
+    toast("Baixa registrada!");
+  }
+
+  // Admin escondido: /#admin com PIN
+  function setupAdmin(){
+    if(location.hash !== "#admin") return;
+    const pin = prompt("PIN do admin:");
+    if(pin !== ADMIN_PIN) { alert("PIN inválido"); location.hash=""; return; }
+    el("adminCard").style.display = "block";
+    el("reload").onclick = async () => {
+      try {
+        await loadData();
+        renderObras();
+        renderTipos();
+        renderUso();
+        renderMateriais();
+        toast("Dados atualizados");
+      } catch(e){
+        alert(e.message);
+      }
+    };
+  }
+
+  // events
+  el("obra").addEventListener("change", () => {
+    // ao mudar obra, pode mudar lista (se backend usar obra)
+    materialAtual = null;
+    el("material").value = "";
+    el("cor").value = "";
+    el("qtd").value = "";
+    renderMateriais();
+    validate();
+  });
+
+  el("material").addEventListener("change", () => {
+    const id = el("material").value;
+    materialAtual = (DATA.materiais || []).find(m => m.id === id) || null;
+    renderCores(materialAtual ? materialAtual.cores : []);
+    renderUnidade(materialAtual);
+    validate();
+  });
+
+  el("cor").addEventListener("change", validate);
+  el("qtd").addEventListener("input", validate);
+  el("btn").addEventListener("click", submit);
+
+  // init
+  (async () => {
+    try {
+      await loadData();
+      renderObras();
+      renderTipos();
+      renderUso();
+      renderMateriais();
+      setupAdmin();
+    } catch(e) {
+      alert("Erro ao iniciar: " + e.message);
+      console.error(e);
+    }
+  })();
+</script>
+
+</body>
+</html>
